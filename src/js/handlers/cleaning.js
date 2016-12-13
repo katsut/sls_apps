@@ -6,5 +6,8 @@ import DeliveryLog from '../models/delivery_log'
 
 export const handler = (event, context, callback) => {
   const log = new DeliveryLog(event)
-  console.log(log.toJson())
+  console.log(event)
+  console.log("hoge")
+  console.log(log.toString())
+  callback(log.toString())
 };

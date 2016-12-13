@@ -7,7 +7,7 @@ class DeliveryLog {
     return true
   }
 
-  toJson() {
+  toString() {
     return JSON.stringify(this.json)
   }
 }
