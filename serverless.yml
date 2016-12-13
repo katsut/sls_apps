@@ -87,7 +87,7 @@ functions:
       - stream:
           arn: arn:aws:kinesis:${self:provider.region}:${self:custom.accountId}:stream/${self:provider.stage}-log-sls-test
           batchSize: 100
-          startingPosition: LATEST
+          startingPosition: TRIM_HORIZON
           enabled: true
 #      - http:
 #          path: users/create
