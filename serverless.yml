@@ -12,11 +12,15 @@
 # Happy Coding!
 
 # service name
-service: kinesis-log-2
+service: log-sls-test-${self:custom.accountId}
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
+custom:
+  accountId: ${env:AWS_ACCOUNT_ID} # TODO 変更 FIXME 自動設定
+  streamNameLog: ${self:provider.stage}-log-sls-test
+  bucketNameLog: ${self:provider.stage}-log-sls-test
 
 provider:
   name: aws
@@ -27,10 +31,10 @@ provider:
 # you can overwrite defaults here
   stage: dev
   region: ap-northeast-1
-  role: arn:aws:iam::xxxx:role/xxxx
+#  role: arn:aws:iam::xxxx:role/xxxx
 
 # you can add statements to the Lambda function's IAM Role here
-#  iamRoleStatements:
+  iamRoleStatements:
 #    - Effect: "Allow"
 #      Action:
 #        - "s3:ListBucket"
@@ -43,19 +47,35 @@ provider:
 #          - ""
 #          - - "arn:aws:s3:::"
 #            - "Ref" : "ServerlessDeploymentBucket"
+    - Effect: Allow
+      Action:
+        - "kinesis:*"
+#        - kinesis:DescribeStream
+#        - kinesis:GetRecords
+#        - kinesis:GetShardIterator
+#        - kinesis:ListStreams
+      Resource: "arn:aws:kinesis:${self:provider.region}:${self:custom.accountId}:stream/${self:custom.streamNameLog}"
+    - Effect: "Allow"
+      Action:
+        - "s3:*"
+      Resource: [
+        "arn:aws:s3:::${self:custom.bucketNameLog}"
+      ]
 
 # you can define service wide environment variables here
   environment:
     REGION: ${self:provider.region}
 
 # you can add packaging information here
-#package:
+package:
 #  include:
 #    - include-me.js
 #    - include-me-dir/**
-#  exclude:
+  exclude:
 #    - exclude-me.js
 #    - exclude-me-dir/**
+    - node_modules/**
+    - .idea/**
 
 functions:
   cleaning:
@@ -65,7 +85,7 @@ functions:
 #    Check the event documentation for details
     events:
       - stream:
-          arn: arn:aws:kinesis:ap-northeast-1:xxxx:stream/dev-delivery-log-stream
+          arn: arn:aws:kinesis:${self:provider.region}:${self:custom.accountId}:stream/${self:provider.stage}-log-sls-test
           batchSize: 100
           startingPosition: LATEST
           enabled: true
@@ -80,8 +100,19 @@ functions:
 #      variable2: value2
 
 # you can add CloudFormation resource templates here
-#resources:
-#  Resources:
+resources:
+  Resources:
+    SLSTestKinesisStream:
+      Type: 'AWS::Kinesis::Stream'
+      DeletionPolicy: Delete
+      Properties:
+        Name: "${self:custom.streamNameLog}"
+        ShardCount: 1
+    SLSTestS3Bucket:
+      Type: AWS::S3::Bucket
+      DeletionPolicy: Delete
+      Properties:
+        BucketName: "${self:provider.stage}-log-sls-test"
 #    NewResource:
 #      Type: AWS::S3::Bucket
 #      Properties:
